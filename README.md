@@ -1,5 +1,7 @@
 # StudioAI Control Center
 
+## [Open the live StudioAI application](https://d1v39n4odpds4l.cloudfront.net)
+
 StudioAI is a portfolio-grade enterprise AI operations workspace for employees, platform administrators, and operations analysts. It combines analytics, chat, model governance, trace investigation, and configuration-driven theming in one responsive React experience.
 
 > **Figma status:** The implementation is organized for a Figma-to-code case study. A source Figma URL is not included yet because no Figma file was supplied. Add the final design link here when the working file is available.
@@ -157,8 +159,6 @@ pnpm build
 ## AWS deployment
 
 StudioAI includes a dedicated static build for private S3 hosting behind CloudFront Origin Access Control.
-
-**Live application:** [https://d1v39n4odpds4l.cloudfront.net](https://d1v39n4odpds4l.cloudfront.net)
 
 ```powershell
 pnpm build:aws
