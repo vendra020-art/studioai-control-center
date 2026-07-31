@@ -177,9 +177,41 @@ function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
 }
 
 function ChatWorkspace() {
+  const initialConversations = [
+    { id: "support", title: "Support sentiment summary", time: "8 min", user: "Summarize the top customer-support pain points from this month and recommend the highest-impact action.", answer: "I analyzed the latest 12,481 support interactions. Three themes drove 71% of negative sentiment: delayed activation, unclear billing adjustments, and password recovery friction.\n\nThe strongest opportunity is activation messaging. Customers who received proactive status updates were 34% less likely to contact support again within seven days." },
+    { id: "campaign", title: "Q3 campaign concepts", time: "1 hr", user: "Create three campaign directions for the Q3 family entertainment launch.", answer: "I created three distinct directions: shared discovery, everyday magic, and stories that travel. Each direction includes an audience insight, creative territory, channel idea, and measurable outcome." },
+    { id: "wait-times", title: "Attraction wait-time analysis", time: "2 hr", user: "What patterns are visible in this week's attraction wait times?", answer: "Peak waits cluster between 11:30 AM and 2:15 PM, with the strongest congestion on Friday and Saturday. Shifting two character experiences by 45 minutes could reduce the central-zone peak by an estimated 9%." },
+  ];
+  const [conversations, setConversations] = useState(initialConversations);
+  const [activeId, setActiveId] = useState("support");
   const [streaming, setStreaming] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [answer, setAnswer] = useState("I analyzed the latest 12,481 support interactions. Three themes drove 71% of negative sentiment: delayed activation, unclear billing adjustments, and password recovery friction.\n\nThe strongest opportunity is activation messaging. Customers who received proactive status updates were 34% less likely to contact support again within seven days.");
+  const [search, setSearch] = useState("");
+  const [activeUserPrompt, setActiveUserPrompt] = useState(initialConversations[0].user);
+  const [answer, setAnswer] = useState(initialConversations[0].answer);
+  const [copied, setCopied] = useState(false);
+  const activeConversation = conversations.find((item) => item.id === activeId) ?? conversations[0];
+  const visibleConversations = conversations.filter((item) => item.title.toLowerCase().includes(search.toLowerCase()));
+  const selectConversation = (id: string) => {
+    const conversation = conversations.find((item) => item.id === id);
+    if (!conversation) return;
+    setStreaming(false);
+    setActiveId(id);
+    setActiveUserPrompt(conversation.user);
+    setAnswer(conversation.answer);
+    setCopied(false);
+  };
+  const createConversation = () => {
+    const id = `chat-${Date.now()}`;
+    const conversation = { id, title: "Untitled conversation", time: "now", user: "", answer: "" };
+    setConversations((current) => [conversation, ...current]);
+    setActiveId(id);
+    setActiveUserPrompt("");
+    setAnswer("");
+    setPrompt("");
+    setSearch("");
+    setStreaming(false);
+  };
   useEffect(() => {
     if (!streaming) return;
     const full = "Based on the current operations data, I recommend prioritizing Atlas 3.5 latency remediation, then expanding the proactive activation workflow. This combination should improve both platform reliability and guest satisfaction without increasing model spend.";
@@ -188,20 +220,33 @@ function ChatWorkspace() {
     const timer = window.setInterval(() => {
       index += 4;
       setAnswer(full.slice(0, index));
-      if (index >= full.length) { window.clearInterval(timer); setStreaming(false); }
+      if (index >= full.length) {
+        window.clearInterval(timer);
+        setStreaming(false);
+        setConversations((current) => current.map((item) => item.id === activeId ? { ...item, answer: full } : item));
+      }
     }, 30);
     return () => window.clearInterval(timer);
-  }, [streaming]);
+  }, [streaming, activeId]);
+  const submitPrompt = () => {
+    const message = prompt.trim();
+    if (!message) return;
+    setActiveUserPrompt(message);
+    setConversations((current) => current.map((item) => item.id === activeId ? { ...item, user: message, title: item.title === "Untitled conversation" ? `${message.slice(0, 34)}${message.length > 34 ? "…" : ""}` : item.title } : item));
+    setPrompt("");
+    setStreaming(true);
+  };
   return (
     <div className="chat-layout">
-      <aside className="conversation-list"><button className="new-chat">＋ New conversation</button><label className="search-box"><span>⌕</span><input aria-label="Search conversations" placeholder="Search conversations" /></label><p className="nav-label">Today</p>{["Support sentiment summary", "Q3 campaign concepts", "Attraction wait-time analysis"].map((name, i) => <button className={i === 0 ? "conversation active" : "conversation"} key={name}><span>{name}</span><small>{i === 0 ? "8 min" : `${i + 1} hr`}</small></button>)}</aside>
+      <aside className="conversation-list"><button className="new-chat" onClick={createConversation}>＋ New conversation</button><label className="search-box"><span>⌕</span><input aria-label="Search conversations" placeholder="Search conversations" value={search} onChange={(event) => setSearch(event.target.value)} /></label><p className="nav-label">Today</p>{visibleConversations.map((conversation) => <button className={activeId === conversation.id ? "conversation active" : "conversation"} aria-pressed={activeId === conversation.id} key={conversation.id} onClick={() => selectConversation(conversation.id)}><span>{conversation.title}</span><small>{conversation.time}</small></button>)}{visibleConversations.length === 0 && <p className="conversation-empty">No conversations found.</p>}</aside>
       <section className="chat-main">
-        <div className="chat-head"><div><h2>Support sentiment summary</h2><p>Private workspace · Saved automatically</p></div><button className="model-picker"><span className="model-dot" />Orion Pro 4.1 <span>⌄</span></button></div>
+        <div className="chat-head"><div><h2>{activeConversation?.title ?? "New conversation"}</h2><p>Private workspace · Saved automatically</p></div><button className="model-picker"><span className="model-dot" />Orion Pro 4.1 <span>⌄</span></button></div>
         <div className="messages">
-          <div className="message user-message"><div className="message-avatar">VM</div><div><strong>You</strong><p>Summarize the top customer-support pain points from this month and recommend the highest-impact action.</p><div className="file-chip">▣ July_support_feedback.csv <span>2.4 MB</span></div></div></div>
-          <div className="message assistant-message"><div className="assistant-avatar">S</div><div><div className="assistant-meta"><strong>StudioAI</strong><span>Orion Pro 4.1</span></div><div className="answer" aria-live="polite">{answer}{streaming && <span className="cursor" />}</div><div className="response-foot"><span>1,284 tokens</span><span>1.42 s</span><span>$0.038</span><div /><button aria-label="Copy response">Copy</button><button aria-label="Helpful response">Good</button><button aria-label="Unhelpful response">Needs work</button></div><details className="sources"><summary>3 sources used</summary><p>July support feedback · Guest care taxonomy · Monthly service report</p></details></div></div>
+          {!activeUserPrompt && !answer && <div className="chat-empty"><div className="assistant-avatar">S</div><h2>What would you like to explore?</h2><p>Start a new analysis with an approved enterprise model.</p><div>{["Summarize model health", "Compare this month's AI spend", "Review failed evaluations"].map((suggestion) => <button key={suggestion} onClick={() => setPrompt(suggestion)}>{suggestion}</button>)}</div></div>}
+          {activeUserPrompt && <div className="message user-message"><div className="message-avatar">VM</div><div><strong>You</strong><p>{activeUserPrompt}</p>{activeId === "support" && <div className="file-chip">▣ July_support_feedback.csv <span>2.4 MB</span></div>}</div></div>}
+          {(answer || streaming) && <div className="message assistant-message"><div className="assistant-avatar">S</div><div><div className="assistant-meta"><strong>StudioAI</strong><span>Orion Pro 4.1</span></div><div className="answer" aria-live="polite">{answer}{streaming && <span className="cursor" />}</div><div className="response-foot"><span>1,284 tokens</span><span>1.42 s</span><span>$0.038</span><div /><button aria-label="Copy response" onClick={() => { navigator.clipboard?.writeText(answer); setCopied(true); window.setTimeout(() => setCopied(false), 1600); }}>{copied ? "Copied" : "Copy"}</button><button aria-label="Regenerate response" onClick={() => setStreaming(true)}>Regenerate</button><button aria-label="Helpful response">Good</button><button aria-label="Unhelpful response">Needs work</button></div><details className="sources"><summary>3 sources used</summary><p>July support feedback · Guest care taxonomy · Monthly service report</p></details></div></div>}
         </div>
-        <form className="composer" onSubmit={(e) => { e.preventDefault(); if (prompt.trim()) { setStreaming(true); setPrompt(""); } }}><textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} aria-label="Message StudioAI" placeholder="Ask StudioAI anything…" rows={2} /><div className="composer-actions"><div><button type="button" aria-label="Attach file">＋</button><button type="button">Sources: on</button></div>{streaming ? <button type="button" className="send" onClick={() => setStreaming(false)}>■ Stop</button> : <button className="send" type="submit">Send ↑</button>}</div><small>StudioAI can make mistakes. Verify important information.</small></form>
+        <form className="composer" onSubmit={(event) => { event.preventDefault(); submitPrompt(); }}><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitPrompt(); } }} aria-label="Message StudioAI" placeholder="Ask StudioAI anything…" rows={2} /><div className="composer-actions"><div><button type="button" aria-label="Attach file">＋</button><button type="button">Sources: on</button></div>{streaming ? <button type="button" className="send" onClick={() => setStreaming(false)}>■ Stop</button> : <button className="send" type="submit" disabled={!prompt.trim()}>Send ↑</button>}</div><small>Press Enter to send · Shift + Enter for a new line</small></form>
       </section>
     </div>
   );
