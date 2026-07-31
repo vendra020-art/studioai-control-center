@@ -74,17 +74,70 @@ Automated axe checks and screen-reader test evidence are recommended for the nex
 
 ## Design tokens
 
+StudioAI uses CSS custom properties as its shared design-token layer. Components reference semantic names instead of repeating literal colors, so the visual language can be updated centrally and the same components can support multiple enterprise brands.
+
+| Token category | Examples | Used for |
+| --- | --- | --- |
+| Surfaces | `--bg`, `--surface`, `--surface-2`, `--surface-3` | Application canvas, cards, inputs, navigation states |
+| Content | `--text`, `--muted` | Primary and secondary information hierarchy |
+| Brand | `--violet`, `--violet-soft` | Primary actions, selection, focus, charts, highlighted states |
+| Semantic | `--green`, `--amber`, `--red`, `--blue`, `--cyan` | Success, warning, danger, information, and data series |
+| Structure | `--line`, `--shadow` | Borders, dividers, elevation, and grouping |
+
 ```css
+:root {
+  --bg: #f4f5f8;
 --surface: #ffffff;
+  --surface-2: #f8f8fb;
 --text: #1d1d28;
+  --muted: #707183;
 --violet: #6558d9;
+  --violet-soft: #eeecff;
 --green: #159a6b;
 --amber: #db8b18;
 --red: #d64c5b;
 --line: #e3e4ea;
+  --shadow: 0 1px 2px rgba(25, 26, 40, 0.03),
+            0 7px 24px rgba(25, 26, 40, 0.04);
+}
 ```
 
-The configuration center demonstrates how brand, theme, density, and feature visibility can be varied without rebuilding each installation.
+### Theme modes
+
+Dark mode overrides the same semantic token names rather than adding component-specific dark styles. A component using `var(--surface)` and `var(--text)` therefore adapts automatically when `data-theme="dark"` is applied to the document root.
+
+```css
+:root[data-theme="dark"] {
+  --bg: #101116;
+  --surface: #181920;
+  --surface-2: #202129;
+  --text: #f1f2f6;
+  --muted: #a1a3b2;
+  --line: #2e303a;
+  --violet-soft: #2a264c;
+}
+```
+
+### Component usage
+
+```css
+.primary-button {
+  background: var(--violet);
+  color: white;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+```
+
+### Figma mapping
+
+Figma variables should use the same semantic naming structure—for example `Color/Surface/Default`, `Color/Text/Muted`, and `Color/Status/Success`. Light and dark Figma variable modes then map directly to the CSS overrides. This keeps designer intent, developer handoff, and runtime theming aligned.
+
+The configuration center demonstrates how brand, theme, density, and feature visibility can vary without rebuilding each installation. A future design-system milestone can add typed TypeScript tokens for spacing, typography, radius, breakpoints, motion, and component density; the current implementation intentionally documents only the tokens already used by the UI.
 
 ## Run locally
 
