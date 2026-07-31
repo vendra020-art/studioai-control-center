@@ -43,3 +43,7 @@ next-env.d.ts
 dev.log
 dev.err.log
 .npm-cache/
+.aws-tools/
+/dist-aws/
+__pycache__/
+*.pyc

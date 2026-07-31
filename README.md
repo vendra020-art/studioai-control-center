@@ -154,6 +154,27 @@ Open `http://localhost:3000`.
 pnpm build
 ```
 
+## AWS deployment
+
+StudioAI includes a dedicated static build for private S3 hosting behind CloudFront Origin Access Control.
+
+**Live application:** [https://d1v39n4odpds4l.cloudfront.net](https://d1v39n4odpds4l.cloudfront.net)
+
+```powershell
+pnpm build:aws
+$env:PYTHONPATH=".aws-tools"
+python scripts/deploy_aws.py --region us-east-1 --profile your-profile
+```
+
+The deployment follows the same security model as Lineflow while creating separate StudioAI resources. It keeps the S3 bucket private, enforces bucket ownership, AES-256 encryption, versioning, 30-day noncurrent-version cleanup, TLS-only access, and all four public-access blocks. CloudFront uses a dedicated Origin Access Control, HTTPS redirects, SPA fallbacks, compressed delivery, and `PriceClass_100`.
+
+The deployment prints two separate destinations:
+
+- `s3_uri` — the private StudioAI origin, such as `s3://studioai-ui-prod-536704084933-us-east-1`
+- `cloudfront_url` — the public StudioAI HTTPS address
+
+AWS credentials must be configured locally before running the deployment. Lineflow resources are read only as an architecture reference and are not modified or reused.
+
 ## Architecture
 
 The first release intentionally uses realistic local data and UI simulations so the design-system, responsive, accessibility, and enterprise workflow evidence can be evaluated without cloud credentials. The next implementation stage can add FastAPI endpoints, TanStack Query, Mock Service Worker, Storybook, automated accessibility tests, and an AWS deployment.
