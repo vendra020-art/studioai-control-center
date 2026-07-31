@@ -1,6 +1,6 @@
 # StudioAI Control Center
 
-## [Open the live StudioAI application](https://d1v39n4odpds4l.cloudfront.net)
+## [==> Open the live StudioAI application](https://d1v39n4odpds4l.cloudfront.net)
 
 StudioAI is a portfolio-grade enterprise AI operations workspace for employees, platform administrators, and operations analysts. It combines analytics, chat, model governance, trace investigation, and configuration-driven theming in one responsive React experience.
 
