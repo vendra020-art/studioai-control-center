@@ -21,6 +21,12 @@ const governanceItems: { id: View; label: string; short: string }[] = [
 
 const allNavigationItems = [...navItems, ...governanceItems];
 
+function getTimeBasedGreeting(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 const modelHealth = [
   { name: "Orion Pro 4.1", provider: "Vertex", status: "Healthy", latency: "740 ms", usage: 84 },
   { name: "Nova Reasoning", provider: "Bedrock", status: "Healthy", latency: "1.12 s", usage: 67 },
@@ -99,7 +105,7 @@ function Sidebar({ active, setActive, open, close }: { active: View; setActive: 
   );
 }
 
-function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
+function Dashboard({ onNavigate, greeting }: { onNavigate: (view: View) => void; greeting: string }) {
   const [range, setRange] = useState("30");
   const [application, setApplication] = useState("All applications");
   const [status, setStatus] = useState("All statuses");
@@ -122,7 +128,7 @@ function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
     <div className="page-grid">
       <section className="main-column">
         <div className="section-heading">
-          <div><h2>Good morning, Victor</h2><p>Here’s how your AI platform is performing today.</p></div>
+          <div><h2>{greeting}, Victor</h2><p>Here’s how your AI platform is performing today.</p></div>
           <div className="filter-row">
             <label className="sr-only" htmlFor="date-range">Date range</label>
             <select id="date-range" value={range} onChange={(event) => setRange(event.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
@@ -319,13 +325,15 @@ export default function Home() {
   const [active, setActive] = useState<View>("overview");
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [greeting, setGreeting] = useState("Welcome");
   const title = useMemo(() => allNavigationItems.find((item) => item.id === active)?.label ?? "StudioAI", [active]);
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { setGreeting(getTimeBasedGreeting(new Date().getHours())); }, []);
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <Sidebar active={active} setActive={setActive} open={menuOpen} close={() => setMenuOpen(false)} />
-      <div className="workspace"><Header title={title} theme={theme} onTheme={() => setTheme(theme === "light" ? "dark" : "light")} onMenu={() => setMenuOpen(true)} /><main id="main-content">{active === "overview" && <Dashboard onNavigate={setActive} />}{active === "chat" && <ChatWorkspace />}{active === "models" && <Models />}{active === "traces" && <Traces />}{active === "settings" && <Settings theme={theme} setTheme={setTheme} />}{active === "evaluations" && <Evaluations />}{active === "teams" && <TeamsAccess />}{active === "keys" && <ApiKeys />}</main></div>
+      <div className="workspace"><Header title={title} theme={theme} onTheme={() => setTheme(theme === "light" ? "dark" : "light")} onMenu={() => setMenuOpen(true)} /><main id="main-content">{active === "overview" && <Dashboard onNavigate={setActive} greeting={greeting} />}{active === "chat" && <ChatWorkspace />}{active === "models" && <Models />}{active === "traces" && <Traces />}{active === "settings" && <Settings theme={theme} setTheme={setTheme} />}{active === "evaluations" && <Evaluations />}{active === "teams" && <TeamsAccess />}{active === "keys" && <ApiKeys />}</main></div>
     </div>
   );
 }
